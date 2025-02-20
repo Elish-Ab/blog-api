@@ -1,11 +1,11 @@
 <?php
 
 namespace App\Http\Controllers;
-
 use Illuminate\Http\Request;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Auth;
+
 
 class AuthController
 {
@@ -32,20 +32,14 @@ class AuthController
     // Login and get token
     public function login(Request $request)
     {
-        $request->validate([
-            'email' => 'required|string|email',
-            'password' => 'required|string',
-        ]);
+        $credentials = $request->only('email', 'password');
 
-        $user = User::where('email', $request->email)->first();
-
-        if (!$user || !Hash::check($request->password, $user->password)) {
-            return response()->json(['message' => 'Invalid credentials'], 401);
+        if (Auth::attempt($credentials)) {
+            $user = Auth::user();
+            return response()->json(['token' => $user->createToken('YourAppName')->plainTextToken]);
         }
 
-        $token = $user->createToken('BlogApp')->plainTextToken;
-
-        return response()->json(['token' => $token]);
+        return response()->json(['message' => 'Invalid credentials'], 401);
     }
 
     // Logout (Revoke the token)
