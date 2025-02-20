@@ -8,49 +8,55 @@ use Illuminate\Support\Facades\Auth;
 
 class PostController extends Controller
 {
+    // Get all posts
     public function index()
     {
-        return response()->json(Post::with('user')->get());
+        return Post::all();
     }
 
+    // Get a single post
+    public function show(Post $post)
+    {
+        return $post;
+    }
+
+    // Create a new post
     public function store(Request $request)
     {
         $request->validate([
-            'title' => 'required|string',
-            'content' => 'required|string'
+            'title' => 'required|string|max:255',
+            'content' => 'required|string',
         ]);
 
-        $post = Auth::user()->posts()->create($request->all());
+        $post = Post::create([
+            'title' => $request->title,
+            'content' => $request->content,
+        ]);
+
         return response()->json($post, 201);
     }
 
-    public function show(Post $post)
-    {
-        return response()->json($post);
-    }
-
+    // Update an existing post
     public function update(Request $request, Post $post)
     {
-        if (Auth::id() !== $post->user_id) {
-            return response()->json(['error' => 'Unauthorized'], 403);
-        }
-
         $request->validate([
-            'title' => 'string',
-            'content' => 'string'
+            'title' => 'required|string|max:255',
+            'content' => 'required|string',
         ]);
 
-        $post->update($request->all());
+        $post->update([
+            'title' => $request->title,
+            'content' => $request->content,
+        ]);
+
         return response()->json($post);
     }
 
+    // Delete a post
     public function destroy(Post $post)
     {
-        if (Auth::id() !== $post->user_id) {
-            return response()->json(['error' => 'Unauthorized'], 403);
-        }
-
         $post->delete();
-        return response()->json(['message' => 'Deleted']);
+
+        return response()->json(['message' => 'Post deleted']);
     }
 }
