@@ -2,47 +2,55 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Post;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class PostController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
-        //
+        return response()->json(Post::with('user')->get());
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
-        //
+        $request->validate([
+            'title' => 'required|string',
+            'content' => 'required|string'
+        ]);
+
+        $post = Auth::user()->posts()->create($request->all());
+        return response()->json($post, 201);
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
+    public function show(Post $post)
     {
-        //
+        return response()->json($post);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
+    public function update(Request $request, Post $post)
     {
-        //
+        if (Auth::id() !== $post->user_id) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        $request->validate([
+            'title' => 'string',
+            'content' => 'string'
+        ]);
+
+        $post->update($request->all());
+        return response()->json($post);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
+    public function destroy(Post $post)
     {
-        //
+        if (Auth::id() !== $post->user_id) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        $post->delete();
+        return response()->json(['message' => 'Deleted']);
     }
 }
